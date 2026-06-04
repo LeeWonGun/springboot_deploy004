@@ -1,10 +1,5 @@
 name: Docker
 
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
 on:
   push:
     branches: [ "main" ]
@@ -27,15 +22,15 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
-      # 2. 다른 아키텍쳐(ARM64 등) 빌드를 위한 QENU(Quick Emulator)
+      # 2. 다른 아키텍처(ARM64 등) 빌드를 위한 QEMU
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      # 3. 멀티 플랫폼을 위한 Buildx 설정 추가
+      # 3. 멀티 플랫폼을 위한 Buildx 설정
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 4. Docker hub에 배포를 위한 로그인
+      # 4. Docker Hub 로그인
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
@@ -49,7 +44,36 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-
           platforms: linux/amd64,linux/arm64
           tags: ${{ secrets.DOCKER_USERNAME }}/springboot_deploy004:latest
 
+  # 6. 서버 배포
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Server via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 0.tcp.jp.ngrok.io
+          port: 13813
+          username: ubuntu
+          password: ubuntu
+
+          # 1) 기존 컨테이너 중지 및 삭제
+          # 2) 최신 이미지 pull
+          # 3) 미사용 이미지를 정리(서버용량 관리)
+          # 4) 새 컨테이너 실행 외부:내부 9090:9090
+          script: |
+            docker stop springboot_004 || true
+            docker rm springboot_004 || true
+
+            docker pull ${{ secrets.DOCKER_USERNAME }}/springboot_deploy004:latest
+
+            docker image prune -f
+
+            docker run -d \
+              --name springboot_004 \
+              -p 9090:9090 \
+              ${{ secrets.DOCKER_USERNAME }}/springboot_deploy004:latest
