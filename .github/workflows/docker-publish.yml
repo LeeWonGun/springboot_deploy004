@@ -25,7 +25,7 @@ jobs:
 
       # 1. Maven Build (Jar파일 생성)
       - name: Build with Maven
-        run: mvn clean package -DskipTests -f ./deploy004_springboot_cicd/pom.xml
+        run: mvn clean package -DskipTests
 
       # 2. 다른 아키텍쳐(ARM64 등) 빌드를 위한 QENU(Quick Emulator)
       - name: Set up QEMU
