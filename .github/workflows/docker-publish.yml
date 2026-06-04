@@ -47,9 +47,9 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./deploy004_springboot_cicd/Dockerfile
+          file: ./Dockerfile
           push: true
 
           platforms: linux/amd64,linux/arm64
-          tags: ${{ secrets.DOCKER_USERNAME }}/deploy004_springboot_cicd:latest
+          tags: ${{ secrets.DOCKER_USERNAME }}/springboot_deploy004:latest
 
